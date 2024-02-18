@@ -1,21 +1,12 @@
 import React from "react";
+import { IMeaning, IWord, IWords } from "../types";
 
-interface WordProps {
-	heading: string;
-	meanings: Array<Meaning>;
-}
-
-interface Meaning {
-	title: string;
-	usage: string;
-}
-
-const Word: React.FC<WordProps> = ({ heading, meanings }) => {
+const Word: React.FC<IWord> = ({ heading, meanings }) => {
 	return (
 		<div className="bg-white rounded-lg shadow-md p-4 mb-4">
 			<h2 className="text-xl font-bold mb-2">{heading}</h2>
 			<ul>
-				{meanings.map((meaning: Meaning, index: number) => (
+				{meanings.map((meaning: IMeaning, index: number) => (
 					<li key={index} className="flex content-start gap-4">
 						<div className="w-4 h-4 mt-2">{index + 1}</div>
 						<div>
@@ -38,34 +29,20 @@ const Word: React.FC<WordProps> = ({ heading, meanings }) => {
 					</li>
 				))}
 			</ul>
+			<button className="">Add New Definition</button>
 		</div>
 	);
 };
 
-export const Words: React.FC = () => {
-	const words = [
-		{
-			heading: "Pacchi",
-			meanings: [
-				{ title: "Raw", usage: "Ee koora pachi ga undi" },
-				{ title: "Wet", usage: "Ee batta pachi pachi ga undi" },
-			],
-		},
-		{
-			heading: "Gunta",
-			meanings: [
-				{ title: "Hot Girl", usage: "Gunta bagundi" },
-				{ title: "Hole", usage: "Mundu gunta undi chusko" },
-			],
-		},
-		{
-			heading: "Bokka",
-			meanings: [
-				{ title: "Waste", usage: "Time bokka" },
-				{ title: "Hole", usage: "Pedda bokka" },
-			],
-		},
-	];
+export const Words: React.FC<IWords> = ({ words }) => {
+
+  if (words.length === 0) {
+    return (
+      <div className="p-6 overflow-auto">
+        <h1>No words found</h1>
+      </div>
+    );
+  }
 
 	return (
 		<div className="p-6 overflow-auto">

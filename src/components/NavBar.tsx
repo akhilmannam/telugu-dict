@@ -1,11 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
+import { INavBar, IPage } from "../types";
 
-interface Page {
-	page: string;
-	navigate: string;
-}
-
-const pages: Array<Page> = [
+const pages: Array<IPage> = [
 	{
 		page: "Home",
 		navigate: "Home",
@@ -28,7 +24,7 @@ const NavLinks: React.FC = () => {
 	return (
 		<nav className="basis-1/2">
 			<ul className="flex gap-5 justify-center">
-				{pages.map((e: Page) => (
+				{pages.map((e: IPage) => (
 					<li key={e.page}>
 						<a
 							className="to-blue-500 hover:to-white"
@@ -43,13 +39,7 @@ const NavLinks: React.FC = () => {
 	);
 };
 
-const Search: React.FC = () => {
-	const [search, setSearch] = useState<string>("");
-
-	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setSearch(e.target.value);
-	};
-
+const Search: React.FC<INavBar> = ({ search, handleSearch }) => {
 	return (
 		<input
 			value={search}
@@ -61,12 +51,12 @@ const Search: React.FC = () => {
 	);
 };
 
-export const NavBar: React.FC = () => {
+export const NavBar: React.FC<INavBar> = ({ search, handleSearch }) => {
 	return (
 		<header className="flex items-center bg-amber-400 p-4">
 			<h1 className="basis-1/5">తెD</h1>
 			<NavLinks />
-			<Search />
+			<Search search={search} handleSearch={handleSearch} />
 		</header>
 	);
 };
