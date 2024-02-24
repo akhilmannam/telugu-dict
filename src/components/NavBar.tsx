@@ -1,22 +1,23 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { INavBar, IPage } from "../types";
 
 const pages: Array<IPage> = [
 	{
 		page: "Home",
-		navigate: "Home",
+		navigate: "/",
 	},
 	{
 		page: "Viral",
-		navigate: "Viral",
+		navigate: "/viral",
 	},
 	{
 		page: "New Additions",
-		navigate: "NewAdditions",
+		navigate: "/newlyadded",
 	},
 	{
 		page: "Add New Word",
-		navigate: "AddNew",
+		navigate: "/add",
 	},
 ];
 
@@ -26,12 +27,12 @@ const NavLinks: React.FC = () => {
 			<ul className="flex gap-5 justify-center">
 				{pages.map((e: IPage) => (
 					<li key={e.page}>
-						<a
+						<Link
 							className="to-blue-500 hover:to-white"
-							href={e.navigate}
+							to={e.navigate}
 						>
 							{e.page}
-						</a>
+						</Link>
 					</li>
 				))}
 			</ul>
@@ -54,7 +55,7 @@ const Search: React.FC<INavBar> = ({ search, handleSearch }) => {
 export const NavBar: React.FC<INavBar> = ({ search, handleSearch }) => {
 	return (
 		<header className="flex items-center bg-amber-400 p-4">
-			<h1 className="basis-1/5">తెD</h1>
+			<h1 className="basis-1/5 text-slate-900">తెD</h1>
 			<NavLinks />
 			<Search search={search} handleSearch={handleSearch} />
 		</header>
