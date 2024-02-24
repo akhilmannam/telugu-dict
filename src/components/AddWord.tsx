@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { IAddWord, IWord } from "../types";
 
 export const AddWord: React.FC<IAddWord> = ({ setWords }) => {
 	const [word, setWord] = React.useState<string>("");
 	const [meaning, setMeaning] = React.useState<string>("");
 	const [usage, setUsage] = React.useState<string>("");
+	const [delay, setDelay] = React.useState<number>(0);
+
+	useEffect(() => {
+		const delayId = setTimeout(() => {
+			setDelay(0);
+		}, 5000);
+		return () => clearTimeout(delayId);
+	}, [delay]);
 
 	const handleSubmit = () => {
 		setWords((w: Array<IWord>) => {
@@ -26,6 +34,7 @@ export const AddWord: React.FC<IAddWord> = ({ setWords }) => {
 		setWord("");
 		setMeaning("");
 		setUsage("");
+    setDelay(1);
 	};
 
 	return (
@@ -51,11 +60,16 @@ export const AddWord: React.FC<IAddWord> = ({ setWords }) => {
 				onChange={(e) => setUsage(e.target.value)}
 			/>
 			<button
-				className="mt-2 bg-blue-500 border-transparent rounded-lg p-2"
+				className="my-2 bg-blue-500 border-transparent rounded-lg p-2"
 				onClick={handleSubmit}
 			>
 				Submit
 			</button>
+			{delay > 0 && (
+				<span className="mt-2">
+					Go to Home to see the newly added word
+				</span>
+			)}
 		</div>
 	);
 };
