@@ -1,104 +1,172 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import axios from "../utils/axiosConfig";
 import { IMeaning, IWord, IWords } from "../types";
 
-export const Words: React.FC<IWords> = ({ words, setWords }) => {
-	const [isEditing, setIsEditing] = React.useState<boolean>(false);
+export const Words: React.FC<IWords> = ({
+	words,
+	setWords,
+	defaultWords,
+	setDefaultWords,
+	search,
+	setSearch,
+}) => {
+	const [isEditing, setIsEditing] = React.useState<Record<
+		string,
+		unknown
+	> | null>(null);
 	const [meaning, setMeaning] = React.useState<string>("");
 	const [usage, setUsage] = React.useState<string>("");
+	const [msg, setMsg] = React.useState<string>("");
+	const [interacted, setInteracted] = React.useState<number>(0);
+
+	React.useEffect(() => {
+		if (words) {
+			const isEditing: Record<string, unknown> = {};
+			words.forEach((word: IWord) => {
+				isEditing[word.id] = false;
+			});
+			setIsEditing(isEditing);
+		}
+	}, [words]);
+
+	const { data } = useQuery({
+		queryKey: ["words", interacted],
+		queryFn: () => axios.get("/words").then((res) => res.data), 
+	});
+
+	const { mutateAsync } = useMutation({
+		mutationFn: async (updatedWord: { id: number; meaning: IMeaning }) => {
+			return await axios
+				.put(`/words/${updatedWord.id}`, updatedWord.meaning)
+				.then(() => {
+					setMeaning("");
+					setUsage("");
+					setIsEditing({
+						...isEditing,
+						[updatedWord.id]: false,
+					});
+				})
+				.catch(() => {
+					setMsg("Error adding meaning to the word");
+				})
+				.finally(() => {
+					setTimeout(() => {
+						setMsg("");
+					}, 3000);
+				});
+		},
+	});
+
+	const { mutateAsync: interactionMutateAsync } = useMutation({
+		mutationFn: async (interaction: {
+			wordId: number;
+			meaningId: number;
+			type: "likes" | "dislikes" | "ban";
+		}) => {
+			return await axios.put(
+				`/words/${interaction.wordId}-${interaction.meaningId}`,
+				interaction
+			).then(() => {
+        setInteracted((i: number) => i + 1);
+      })
+		},
+	});
+
+	useEffect(() => {
+		if (data) {
+			setDefaultWords(data);
+			setWords(data);
+		}
+	}, [data, setDefaultWords, setWords]);
+
+	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value: string = e.target.value;
+		setSearch(value);
+		if (value && value.length > 0) {
+			const filteredWords = defaultWords.filter((word: IWord) => {
+				return word?.heading
+					?.toLowerCase()
+					?.includes(value?.toLowerCase());
+			});
+			setWords(filteredWords);
+		} else {
+			setWords(defaultWords);
+		}
+	};
 
 	const handleSubmit = (wordId: number) => {
-		setWords((w: Array<IWord>) => {
-			return w.map((word: IWord) => {
-				if (word.id === wordId) {
-					return {
-						...word,
-						meanings: [
-							...word.meanings,
-							{
-								id: word.meanings.length + 1,
-								title: meaning,
-								usage: usage,
-							},
-						],
-					};
-				}
-				return word;
-			});
+		const existingWord = words.filter(
+			(word: IWord) => word.id === wordId
+		)?.[0];
+		const newMeaning = {
+			id: existingWord ? existingWord?.meanings.length + 1 : 1,
+			title: meaning,
+			usage: usage,
+			likes: 0,
+			dislikes: 0,
+			ban: 0,
+		};
+		const updatedWord = {
+			id: wordId,
+			meaning: newMeaning,
+		};
+		mutateAsync(updatedWord);
+	};
+
+	const handleCancel = (wordId: number) => {
+		setMeaning("");
+		setUsage("");
+		setIsEditing({
+			...isEditing,
+			[wordId]: false,
 		});
-		setIsEditing(false);
 	};
 
 	const onInteract = (
 		wordId: number,
 		meaningId: number,
-		type: "like" | "dislike" | "ban"
+		type: "likes" | "dislikes" | "ban"
 	) => {
-		setWords((w: Array<IWord>) => {
-			return w.map((word: IWord) => {
-				if (word.id === wordId) {
-					if (type === "like") {
-						return {
-							...word,
-							meanings: word.meanings.map((meaning: IMeaning) => {
-								if (meaning.id === meaningId)
-									return {
-										...meaning,
-										likes: meaning.likes
-											? meaning.likes + 1
-											: 1,
-									};
-								else return meaning;
-							}),
-						};
-					} else if (type === "dislike") {
-						return {
-							...word,
-							meanings: word.meanings.map((meaning: IMeaning) => {
-								if (meaning.id === meaningId)
-									return {
-										...meaning,
-										dislikes: meaning.dislikes
-											? meaning.dislikes + 1
-											: 1,
-									};
-								else return meaning;
-							}),
-						};
-					} else {
-						return {
-							...word,
-							meanings: word.meanings.map((meaning: IMeaning) => {
-								if (meaning.id === meaningId)
-									return {
-										...meaning,
-										ban: meaning.ban ? meaning.ban + 1 : 1,
-									};
-								else return meaning;
-							}),
-						};
-					}
-				}
-				return word;
-			});
+		interactionMutateAsync({
+			wordId,
+			meaningId,
+			type,
 		});
 	};
 
-	if (words.length === 0) {
-		return (
-			<div className="p-6 overflow-auto">
-				<h1>No words found</h1>
-			</div>
-		);
-	}
+  // TODO - Fix the loading state
+	// if (isLoading) {
+	// 	return (
+	// 		<div className="p-6 overflow-auto">
+	// 			<h1>Loading...</h1>
+	// 		</div>
+	// 	);
+	// }
+
+	// if (words.length === 0) {
+	// 	return (
+	// 		<div className="p-6 overflow-auto">
+	// 			<h1>No words found</h1>
+	// 		</div>
+	// 	);
+	// }
 
 	return (
-		<div className="p-6 overflow-auto">
+		<div className="flex flex-col items-center justify-center">
+			<input
+				value={search}
+				onChange={handleSearch}
+				type="text"
+				placeholder="Search..."
+				className="p-2 my-3 rounded-md border-2 border-gray-300 focus:outline-none focus:border-blue-500"
+			/>
 			{words.map((word: IWord, index: number) => {
 				const { id: wordId, heading, meanings = [] } = word;
 				return (
 					<div
 						key={index}
-						className="bg-white rounded-lg shadow-md p-4 mb-4"
+						className="bg-white rounded-2xl shadow-md p-4 mb-4 min-w-96"
 					>
 						<h2 className="text-xl font-bold mb-2">{heading}</h2>
 						<ul>
@@ -139,7 +207,7 @@ export const Words: React.FC<IWords> = ({ words, setWords }) => {
 															onInteract(
 																wordId,
 																meaningId,
-																"like"
+																"likes"
 															)
 														}
 														className="bg-blue-400 border p-2 rounded-md flex justify-between"
@@ -160,7 +228,7 @@ export const Words: React.FC<IWords> = ({ words, setWords }) => {
 															onInteract(
 																wordId,
 																meaningId,
-																"dislike"
+																"dislikes"
 															)
 														}
 														className="bg-red-400 border p-2 rounded-md flex justify-between"
@@ -202,8 +270,8 @@ export const Words: React.FC<IWords> = ({ words, setWords }) => {
 								)
 							)}
 						</ul>
-						{isEditing ? (
-							<div className="w-1/3 flex flex-col gap-3 m-4">
+						{isEditing && isEditing[wordId] ? (
+							<div className="flex flex-col gap-3 m-4">
 								<textarea
 									placeholder="Add another meaning for the above word"
 									className="h-32 p-2 my-4 rounded-md border-2 border-gray-300 focus:outline-none focus:border-blue-500 border-b-4"
@@ -216,16 +284,31 @@ export const Words: React.FC<IWords> = ({ words, setWords }) => {
 									value={usage}
 									onChange={(e) => setUsage(e.target.value)}
 								/>
-								<button
-									className="mt-2 bg-blue-500 border-transparent rounded-lg p-2"
-									onClick={() => handleSubmit(wordId)}
-								>
-									Submit
-								</button>
+								<div className="flex gap-3">
+									<button
+										className="mt-2 bg-blue-300 border-transparent rounded-lg p-2"
+										onClick={() => handleSubmit(wordId)}
+									>
+										Submit
+									</button>
+									<button
+										className="mt-2 bg-red-300 border-transparent rounded-lg p-2"
+										onClick={() => handleCancel(wordId)}
+									>
+										Cancel
+									</button>
+								</div>
+
+								{msg && <span className="mt-2">{msg}</span>}
 							</div>
 						) : (
 							<button
-								onClick={() => setIsEditing(true)}
+								onClick={() =>
+									setIsEditing({
+										...isEditing,
+										[wordId]: true,
+									})
+								}
 								className="bg-orange-300 border m-4 p-2 rounded-md"
 							>
 								Add New Definition

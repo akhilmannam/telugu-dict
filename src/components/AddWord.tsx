@@ -1,75 +1,92 @@
-import React, { useEffect } from "react";
+import React from "react";
+import { useMutation } from "@tanstack/react-query";
+import axios from "../utils/axiosConfig";
 import { IAddWord, IWord } from "../types";
 
-export const AddWord: React.FC<IAddWord> = ({ setWords }) => {
+export const AddWord: React.FC<IAddWord> = ({ words }) => {
 	const [word, setWord] = React.useState<string>("");
 	const [meaning, setMeaning] = React.useState<string>("");
 	const [usage, setUsage] = React.useState<string>("");
-	const [delay, setDelay] = React.useState<number>(0);
+	const [msg, setMsg] = React.useState<string>("");
 
-	useEffect(() => {
-		const delayId = setTimeout(() => {
-			setDelay(0);
-		}, 5000);
-		return () => clearTimeout(delayId);
-	}, [delay]);
+	const { mutateAsync } = useMutation({
+		mutationFn: async (newWord: IWord) => {
+			return await axios
+				.post("/words", newWord)
+				.then(() => {
+					setMsg("Word added successfully");
+					setWord("");
+					setMeaning("");
+					setUsage("");
+				})
+				.catch(() => {
+					setMsg("Error adding word");
+				})
+				.finally(() => {
+					setTimeout(() => {
+						setMsg("");
+					}, 3000);
+				});
+		},
+	});
 
-	const handleSubmit = () => {
-		setWords((w: Array<IWord>) => {
-			return [
-				...w,
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		if (!word || !meaning || !usage) {
+			setMsg("All fields are required");
+			return;
+		}
+		mutateAsync({
+			id: words.length + 1,
+			heading: word,
+			meanings: [
 				{
-					id: w.length + 1,
-					heading: word,
-					meanings: [
-						{
-							id: 1,
-							title: meaning,
-							usage: usage,
-						},
-					],
+					id: 1,
+					title: meaning,
+					usage: usage,
+					likes: 0,
+					dislikes: 0,
+					ban: 0,
 				},
-			];
+			],
 		});
-		setWord("");
-		setMeaning("");
-		setUsage("");
-    setDelay(1);
 	};
 
 	return (
-		<div className="w-3/5 h-3/5 flex flex-col justify-center items-center my-0 mx-auto">
-			<h3>Add a new word</h3>
+		<form
+			title="Add a new word"
+			className="w-3/5 h-3/5 flex flex-col justify-center items-center my-1 mx-auto"
+			onSubmit={handleSubmit}
+		>
+			<label htmlFor="word">Word</label>
 			<input
 				type="text"
 				className="h-8 p-2 my-4 rounded-md border-2 border-gray-300 focus:outline-none focus:border-blue-500 border-b-4"
 				placeholder="Add a word"
 				value={word}
+				name="word"
 				onChange={(e) => setWord(e.target.value)}
 			/>
+			<label htmlFor="meaning">Meaning</label>
 			<textarea
 				placeholder="Add meaning of the word"
 				className="h-32 p-2 my-4 rounded-md border-2 border-gray-300 focus:outline-none focus:border-blue-500 border-b-4"
 				value={meaning}
+				name="meaning"
 				onChange={(e) => setMeaning(e.target.value)}
 			/>
+			<label htmlFor="usage">Usage</label>
 			<textarea
 				placeholder="Add usage of the word"
 				className="h-32 p-2 rounded-md mt-4 border-2 border-gray-300 focus:outline-none focus:border-blue-500 border-b-4"
 				value={usage}
+				name="usage"
 				onChange={(e) => setUsage(e.target.value)}
 			/>
-			<button
-				className="my-2 bg-blue-500 border-transparent rounded-lg p-2"
-				onClick={handleSubmit}
-			>
+			<button className="my-2 bg-blue-500 border-transparent rounded-lg p-2">
 				Submit
 			</button>
-			{delay > 0 && (
-				<span className="mt-2">
-					Go to Home to see the newly added word
-				</span>
-			)}
-		</div>
+			{msg && <span className="mt-2">{msg}</span>}
+		</form>
 	);
 };

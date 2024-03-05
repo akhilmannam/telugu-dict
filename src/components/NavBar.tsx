@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { INavBar, IPage } from "../types";
+import { IPage } from "../types";
 
 const pages: Array<IPage> = [
 	{
@@ -23,10 +23,10 @@ const pages: Array<IPage> = [
 
 const NavLinks: React.FC = () => {
 	return (
-		<nav className="basis-1/2">
+		<nav>
 			<ul className="flex gap-5 justify-center">
 				{pages.map((e: IPage) => (
-					<li key={e.page}>
+					<li className="p-2" key={e.page}>
 						<Link
 							className="to-blue-500 hover:to-white"
 							to={e.navigate}
@@ -40,24 +40,11 @@ const NavLinks: React.FC = () => {
 	);
 };
 
-const Search: React.FC<INavBar> = ({ search, handleSearch }) => {
+export const NavBar: React.FC = () => {
 	return (
-		<input
-			value={search}
-			onChange={handleSearch}
-			type="text"
-			placeholder="Search..."
-			className="p-2 rounded-md border-2 border-gray-300 focus:outline-none focus:border-blue-500"
-		/>
-	);
-};
-
-export const NavBar: React.FC<INavBar> = ({ search, handleSearch }) => {
-	return (
-		<header className="flex items-center bg-amber-400 p-4">
+		<header className="flex items-center justify-between bg-amber-400 p-4">
 			<h1 className="basis-1/5 text-slate-900">తెD</h1>
 			<NavLinks />
-			<Search search={search} handleSearch={handleSearch} />
 		</header>
 	);
 };
