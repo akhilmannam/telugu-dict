@@ -2,8 +2,8 @@ export interface IMeaning {
 	id: number;
 	title: string;
 	usage: string;
-	likes: number;
-	dislikes: number;
+	like: number;
+	dislike: number;
 	ban: number;
 	handleInteractions?: (
 		wordId: number,
@@ -16,6 +16,7 @@ export interface IWord {
 	id: number;
 	heading: string;
 	meanings: Array<IMeaning>;
+	userId?: string | undefined;
 }
 
 export interface IWords {
@@ -35,4 +36,21 @@ export interface IPage {
 export interface IAddWord {
 	words: Array<IWord>;
 	setWords?: React.Dispatch<React.SetStateAction<IWord[]>>;
+}
+
+export interface AuthContextType {
+	isLoggedIn: boolean;
+	login: () => void;
+	logout: () => void;
+	user: IUser | null;
+}
+
+export interface IUser {
+	sub: string;
+	name: string;
+	given_name: string;
+	family_name: string;
+	picture: string;
+	email: string;
+	email_verified: boolean;
 }

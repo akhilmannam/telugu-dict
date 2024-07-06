@@ -2,38 +2,47 @@ import React from "react";
 import { useMutation } from "@tanstack/react-query";
 import axios from "../utils/axiosConfig";
 import { IAddWord, IWord } from "../types";
+import { useAuth } from "../context/useAuth";
+import { toast } from "react-toastify";
+import { DEFAULT_OPTIONS } from "../utils/toast";
+import { Link } from "react-router-dom";
 
 export const AddWord: React.FC<IAddWord> = ({ words }) => {
 	const [word, setWord] = React.useState<string>("");
 	const [meaning, setMeaning] = React.useState<string>("");
 	const [usage, setUsage] = React.useState<string>("");
-	const [msg, setMsg] = React.useState<string>("");
+	const [link, setLink] = React.useState<boolean>(false);
+	const { isLoggedIn, user } = useAuth();
 
 	const { mutateAsync } = useMutation({
 		mutationFn: async (newWord: IWord) => {
 			return await axios
 				.post("/words", newWord)
 				.then(() => {
-					setMsg("Word added successfully");
 					setWord("");
 					setMeaning("");
 					setUsage("");
+					toast.success("Word added successfully", DEFAULT_OPTIONS);
+					setLink(true);
 				})
-				.catch(() => {
-					setMsg("Error adding word");
-				})
-				.finally(() => {
-					setTimeout(() => {
-						setMsg("");
-					}, 3000);
+				.catch((error) => {
+					toast.error(
+						error?.response?.data?.message,
+						DEFAULT_OPTIONS
+					);
 				});
 		},
 	});
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+
+		if (!isLoggedIn) {
+			toast.error("Please login to add a word", DEFAULT_OPTIONS);
+		}
+
 		if (!word || !meaning || !usage) {
-			setMsg("All fields are required");
+			toast.warn("All fields are required", DEFAULT_OPTIONS);
 			return;
 		}
 		mutateAsync({
@@ -44,11 +53,12 @@ export const AddWord: React.FC<IAddWord> = ({ words }) => {
 					id: 1,
 					title: meaning,
 					usage: usage,
-					likes: 0,
-					dislikes: 0,
+					like: 0,
+					dislike: 0,
 					ban: 0,
 				},
 			],
+			userId: user?.sub,
 		});
 	};
 
@@ -86,7 +96,14 @@ export const AddWord: React.FC<IAddWord> = ({ words }) => {
 			<button className="my-2 bg-blue-500 border-transparent rounded-lg p-2">
 				Submit
 			</button>
-			{msg && <span className="mt-2">{msg}</span>}
+			{link && (
+				<Link
+					to="/"
+					className="block text-gray-700 hover:text-blue-600 transition-colors duration-300 mx-auto mt-4"
+				>
+					Go to Home
+				</Link>
+			)}
 		</form>
 	);
 };
