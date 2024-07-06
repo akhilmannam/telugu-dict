@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { IPage, IUser } from "../types";
 import { useAuth } from "../context/useAuth";
 
@@ -107,6 +107,7 @@ const NavLinks: React.FC<{
 
 export const NavBar: React.FC = () => {
 	const { isLoggedIn, logout, user } = useAuth();
+  const navigate = useNavigate();
 	const [isOpen, setIsOpen] = useState(false);
 
 	const toggleMenu = () => {
@@ -119,7 +120,7 @@ export const NavBar: React.FC = () => {
 
 	return (
 		<header className="flex items-center justify-between bg-amber-400 p-4 relative">
-			<h1 className="basis-1/5 text-slate-900">తెD</h1>
+			<h1 className="basis-1/5 text-slate-900 cursor-pointer" onClick={() => navigate("/")}>తెD</h1>
 			<div className="md:hidden">
 				<button
 					onClick={toggleMenu}
